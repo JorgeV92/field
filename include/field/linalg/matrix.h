@@ -130,11 +130,61 @@ public:
         }
         return rank_;
     }
-    
+    T Determinant() const {
+        CheckSquare();
+        Matrix<T> reduced(*this);
+        const T zero = T();
+        T determinant = T(1);
+        int swap_count = 0;
+        for (std::size_t pivot_col = 0 ; pivot_col < cols_; ++pivot_col) {
+            std::size_t selected = pivot_col;
+            while (selected < rows_ && reduced(selected, pivot_col) == zero) {++selected;}
+            if (selected == rows_) {return T();}
+            if (selected != pivot_col) {reduced.SwapRows(selected, pivot_col); ++swap_count;}
+            T pivot = reduced(pivot_col, pivot_col);
+            determinant *= pivot;
+            for (std::size_t row = pivot_col + 1; row < rows_; ++row) {
+                if (reduced(row, pivot_col) == zero) continue;
+                T factor = reduced(row, pivot_col) / pivot;
+                for (std::size_t col = pivot_col; col < cols_; ++col) 
+                    reduced(row, col) -= factor * reduced(pivot_col, col);
+            }
+        }
+        if (swap_count % 2 != 0)
+            determinant = -determinant;
+        return determinant;
+    }
+    Matrix Inverse() const {
+        CheckSquare();
+        Matrix<T> left(*this);
+        Matrix<T> right = Matrix<T>::Identity(rows_);
+        const T zero = T();
+        for (std::size_t pivot_col = 0; pivot_col < cols_; ++pivot_col) {
+            std::size_t selected = pivot_col;
+            while (selected < rows_ && left(selected, pivot_col) == zero) {++selected;}
+            if (selected == rows_) throw std::domain_error("Matrix is singular and cannot be inverted.");
+            if (selected != pivot_col) {left.SwapRows(selected, pivot_col); right.SwapRows(selected, pivot_col);}
+            T pivot = left(pivot_col, pivot_col);
+            for (std::size_t col = 0; col < cols_; ++col) {
+                left(pivot_col, col) /= pivot;
+                right(pivot_col, col) /= pivot;
+            }
+            for (std::size_t row = 0; row < rows_; ++row) {
+                if (row == pivot_col || left(row, pivot_col) == zero) continue;
+                T factor = left(row, pivot_col);
+                for (std::size_t col = 0; col < cols_; ++col) {
+                    left(row, col) -= factor * left(pivot_col, col);
+                    right(row, col) -= factor * right(pivot_col, col);
+                }
+            }
+        }
+        return right;
+    }
 private:
     void CheckSameShape(const Matrix& o) const {if (rows_ != o.rows_ || cols_ != o.cols_) throw std::invalid_argument("Matrix shape mismatch.");}
     void CheckSquare() const {if (rows_ != cols_) throw std::invalid_argument("Matrix must be square.");}
     void SwapRows(std::size_t l, std::size_t r) {if(l == r) return; for (std::size_t col = 0; col < cols_; ++col){std::swap((*this)(l, col), (*this)(r, col));}}
+    std::size_t Index(std::size_t row, std::size_t col) const {if (row >= rows_ || col >= cols_) throw std::out_of_range("Matrix index out of range.");}
     std::size_t rows_;
     std::size_t cols_;
     std::vector<T> data_;
