@@ -1,0 +1,17 @@
+build/
+.cache/
+.vscode/
+.DS_Store
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+compile_commands.json
+
+__pycache__/
+*.egg-info/
+.pytest_cache/
