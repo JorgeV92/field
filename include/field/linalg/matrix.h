@@ -51,9 +51,90 @@ public:
         return Vector<T>(std::move(v));
     }
     Matrix& operator+=(const Matrix& o) {CheckSameShape(o); for (std::size_t i = 0; i < data_.size(); ++i) {data_[i] += o.data_[i];} return *this;}
+    Matrix& operator-=(const Matrix& o) {CheckSameShape(o); for (std::size_t i = 0; i < data_.size(); ++i) {data_[i] -= o.data_[i];} return *this;}
+    Matrix& operator*=(const T& x) {for (T& v : data_) v *= x; return *this;}
+    Matrix& operator/=(const T& x) {for (T& v : data_) v /= x; return *this;}
+    Matrix operator+(const Matrix& o) const {Matrix cpy(*this); cpy += o; return cpy;}
+    Matrix operator-(const Matrix& o) const {Matrix cpy(*this); cpy -= o; return cpy;}
+    Matrix operator*(const T& x) const {Matrix cpy(*this); cpy *= x; return cpy;}
+    Matrix operator/(const T& y) const {Matrix cpy(*this); cpy /= y; return cpy;}
+    Matrix operator*(const Matrix& o) const {
+        if (cols_ != o.rows_) throw std::invalid_argument("Matrix multi shape mismatch.");
+        Matrix res(rows_, o.cols_, T());
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t k = 0; k < cols_; ++k) {
+                const T& lhs = (*this)(i, k);
+                for (std::size_t j = 0; j < o.cols_; ++j) {
+                    res(i, j) += lhs * o(k, j);
+                }
+            }
+        }
+        return res;
+    }
+    Vecotr<T> operator*(const Vector<T>& vec) const {
+        if (cols_ != vec.Size()) throw std::invalid_argument("Matrix-vector multi shape mismatch.");
+        std::vector<T> res(rows_, T());
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                res[i] += (*this)(i, j) * vec[j];
+            }
+        }
+        return Vector<T>(std::move(res));
+    }
+    Matrix Hadamard(const Matrix& o) const {
+        CheckSameShape(o);
+        Matrix res(rows_, cols_, T());
+        for (std::size_t i = 0; i < data_.size(); ++i) {
+            res.data_[i] = data_[i] * o.data_[i];
+        }
+        return res;
+    }
+    Matrix Transpose() const {
+        Matrix T(cols_, rows_, T());
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                T(j, i) = (*this)(i, j);
+            }
+        }
+        return T;
+    }
+    T Trace() const {_CheckArgs(); T trace = T(); for (std::size_t i = 0; i < rows_; ++i){trace += (*this)(i,i);} return trace;}
+    T Sum() const {T sum = T(); for (const T& v : data_){sum += v;} return sum;}
+    template<typename UF> Matrix Apply(UF fn) const {
+        Matrix res(rows_, cols_, T());
+        for (std::size_t i = 0; i < data_.size(); ++i) {
+            res.data_[i] = fn(data_[i]);
+        }
+        return res;
+    }
+    std::size_t Rank() const {
+        Matrix<T> reduced(*this);
+        const T zero = T();
+        std::size_t rank_ = 0;
+        std::size_t pivot_row = 0;
+        for (std::size_t pivot_col = 0; pivot_col < cols_ && pivot_col < rows_; ++pivot_col) {
+            std::size_t selected = pivot_row;
+            while (selected < rows_ && reduced(selected, pivot_col) == zero) {++selected;}
+            if (selected == rows_) continue;
+            if (selected != pivot_row) reduced.SwapRows(selected, pivot_row);
+            T pivot = reduced(pivot_row, pivot_col);
+            for (std::size_t row = pivot_row + 1; row < rows_; ++row) {
+                if (reduced(row, pivot_col) == zero) continue;
+                T factor = reduced(row, pivot_col) / pivot;
+                for (std::size_t col = pivot_col; col < cols_; ++col) {
+                    reduced(row, col) -= factor * reduced(pivot_row, col);
+                }
+            }
+            ++rank_;
+            ++pivot_row;
+        }
+        return rank_;
+    }
     
 private:
     void CheckSameShape(const Matrix& o) const {if (rows_ != o.rows_ || cols_ != o.cols_) throw std::invalid_argument("Matrix shape mismatch.");}
+    void CheckSquare() const {if (rows_ != cols_) throw std::invalid_argument("Matrix must be square.");}
+    void SwapRows(std::size_t l, std::size_t r) {if(l == r) return; for (std::size_t col = 0; col < cols_; ++col){std::swap((*this)(l, col), (*this)(r, col));}}
     std::size_t rows_;
     std::size_t cols_;
     std::vector<T> data_;
