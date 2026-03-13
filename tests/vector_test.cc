@@ -13,4 +13,6 @@ int main() {
 
     FIELD_EXPECT_TRUE(a.Size() == 3);
     FIELD_EXPECT_TRUE(!a.Empty());
+
+    return EXIT_SUCCESS;
 }

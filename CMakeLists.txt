@@ -22,4 +22,5 @@ if(FIELD_BUILD_TESTS)
   endfunction()
 
   field_add_test(vector_test tests/vector_test.cc)
+  field_add_test(matrix_test tests/matrix_test.cc)
 endif()

@@ -21,9 +21,9 @@ public:
     Matrix() : rows_(0), cols_(0) {}
     Matrix(std::size_t rs, std::size_t cls, const T& v = T()) : rows_(rs), cols_(cls), data_(rs*cls, v) {}
     Matrix(std::initializer_list<std::initializer_list<T>> rows) 
-        : rows_(rows.size()), cols_(rows.soize() == 0 ? 0 : rows.begin()->size()) {
+        : rows_(rows.size()), cols_(rows.size() == 0 ? 0 : rows.begin()->size()) {
         data_.reserve(rows_*cols_); 
-        for (const auto& r : rows_) {
+        for (const auto& r : rows) {
             if (r.size() != cols_) {
                 throw std::invalid_argument("Jagged init list.");
             }
@@ -71,7 +71,7 @@ public:
         }
         return res;
     }
-    Vecotr<T> operator*(const Vector<T>& vec) const {
+    Vector<T> operator*(const Vector<T>& vec) const {
         if (cols_ != vec.Size()) throw std::invalid_argument("Matrix-vector multi shape mismatch.");
         std::vector<T> res(rows_, T());
         for (std::size_t i = 0; i < rows_; ++i) {
@@ -90,15 +90,15 @@ public:
         return res;
     }
     Matrix Transpose() const {
-        Matrix T(cols_, rows_, T());
+        Matrix TP(cols_, rows_, T());
         for (std::size_t i = 0; i < rows_; ++i) {
             for (std::size_t j = 0; j < cols_; ++j) {
-                T(j, i) = (*this)(i, j);
+                TP(j, i) = (*this)(i, j);
             }
         }
-        return T;
+        return TP;
     }
-    T Trace() const {_CheckArgs(); T trace = T(); for (std::size_t i = 0; i < rows_; ++i){trace += (*this)(i,i);} return trace;}
+    T Trace() const {CheckSquare(); T trace = T(); for (std::size_t i = 0; i < rows_; ++i){trace += (*this)(i,i);} return trace;}
     T Sum() const {T sum = T(); for (const T& v : data_){sum += v;} return sum;}
     template<typename UF> Matrix Apply(UF fn) const {
         Matrix res(rows_, cols_, T());
@@ -184,7 +184,7 @@ private:
     void CheckSameShape(const Matrix& o) const {if (rows_ != o.rows_ || cols_ != o.cols_) throw std::invalid_argument("Matrix shape mismatch.");}
     void CheckSquare() const {if (rows_ != cols_) throw std::invalid_argument("Matrix must be square.");}
     void SwapRows(std::size_t l, std::size_t r) {if(l == r) return; for (std::size_t col = 0; col < cols_; ++col){std::swap((*this)(l, col), (*this)(r, col));}}
-    std::size_t Index(std::size_t row, std::size_t col) const {if (row >= rows_ || col >= cols_) throw std::out_of_range("Matrix index out of range.");}
+    std::size_t Index(std::size_t row, std::size_t col) const {if (row >= rows_ || col >= cols_) throw std::out_of_range("Matrix index out of range."); return row * cols_ + col;}
     std::size_t rows_;
     std::size_t cols_;
     std::vector<T> data_;
