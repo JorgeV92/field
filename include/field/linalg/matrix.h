@@ -189,7 +189,20 @@ private:
     std::size_t cols_;
     std::vector<T> data_;
 };
-
+template<typename T> Matrix<T> operator*(const T& x, const Matrix<T>& mat) {return mat * x;}
+template<typename T> std::ostream& operator<<(std::ostream& os, const Matrix<T>& mat) {
+    for (std::size_t i = 0; i < mat.Rows(); ++i) {
+        os << "[";
+        for (std::size_t j = 0; j < mat.Cols(); j++) {
+            os << mat(i, j);
+            if (j+1 != mat.Cols()) os << ", ";
+        }
+        os << "]";
+        if (i+1 != mat.Rows()) os << "\n";
+    }
+    return os;
 }
+
+}// namespace field::linalg
 
 #endif  // FIELD_LINALG_MATRIX_H_

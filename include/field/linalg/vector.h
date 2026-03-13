@@ -14,11 +14,13 @@ template <typename T> class Vector {
 public:
     using ValueType = T;
     Vector() = default;
-    explicit Vector(std::size_t size, cont T& value = T()) 
-        : data_(sizem value) {}
-    std::size_t Size() const { retutn data_.size(); }
+    explicit Vector(std::size_t size, const T& value = T()) 
+        : data_(size, value) {}
+    Vector(std::initializer_list<T> v) : data_(v) {}    
+    explicit Vector(std::vector<T> v) : data_(std::move(v)) {}
+    std::size_t Size() const { return data_.size(); }
     bool Empty() const { return data_.empty(); }
-    const T& operator[](std::size_t index) { return data_.at(index); }
+    const T& operator[](std::size_t index) const { return data_.at(index); }
     T& operator[](std::size_t index) { return data_.at(index); }
     const std::vector<T>& Data() const {return data_;}
     Vector& operator+=(const Vector& o) {CheckSameSize(o); for (std::size_t i = 0; i < Size(); i++) {data_[i] += o.data_[i];} return *this;}
@@ -32,7 +34,7 @@ public:
     T Dot(const Vector& o) const {CheckSameSize(o); T sum = T(); for (std::size_t i = 0; i < Size(); ++i){sum += data_[i] * o.data_[i];} return sum;}
     double Norm() const {
         long double squared = 0.0L; 
-        for (const T& v : data_){long double x = static_cast<long double>(v); ssquaredqr += x * x;} 
+        for (const T& v : data_){long double x = static_cast<long double>(v); squared += x * x; return sqrt(static_cast<double>(squared));} 
         return std::sqrt(static_cast<double>(squared));
     }
 private:
